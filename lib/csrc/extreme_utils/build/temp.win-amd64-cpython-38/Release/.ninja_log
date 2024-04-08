@@ -1,0 +1,10 @@
+# ninja log v5
+4	10643	7342716380051577	D:/GitHub/deepsnake/lib/csrc/extreme_utils/build/temp.win-amd64-cpython-38/Release/GitHub/deepsnake/lib/csrc/extreme_utils/utils.obj	22a4220978db9e2a
+3	13956	7342722005833033	D:/GitHub/deepsnake/lib/csrc/extreme_utils/build/temp.win-amd64-cpython-38/Release/GitHub/deepsnake/lib/csrc/extreme_utils/src/utils.obj	f32a4dba7e1e8647
+20	14292	7342727269971506	D:/GitHub/deepsnake/lib/csrc/extreme_utils/build/temp.win-amd64-cpython-38/Release/GitHub/deepsnake/lib/csrc/extreme_utils/src/utils.obj	f32a4dba7e1e8647
+17	13847	7342728360594899	D:/GitHub/deepsnake/lib/csrc/extreme_utils/build/temp.win-amd64-cpython-38/Release/GitHub/deepsnake/lib/csrc/extreme_utils/src/nms.obj	153aa2eae2d438c6
+17	14518	7342732456204720	D:/GitHub/deepsnake/lib/csrc/extreme_utils/build/temp.win-amd64-cpython-38/Release/GitHub/deepsnake/lib/csrc/extreme_utils/src/nms.obj	153aa2eae2d438c6
+19	14851	7342732459525797	D:/GitHub/deepsnake/lib/csrc/extreme_utils/build/temp.win-amd64-cpython-38/Release/GitHub/deepsnake/lib/csrc/extreme_utils/src/utils.obj	f32a4dba7e1e8647
+19	11711	7342740958135066	D:/GitHub/deepsnake/lib/csrc/extreme_utils/build/temp.win-amd64-cpython-38/Release/GitHub/deepsnake/lib/csrc/extreme_utils/utils.obj	5eb4c87fe1ec2830
+16	14849	7342740989425360	D:/GitHub/deepsnake/lib/csrc/extreme_utils/build/temp.win-amd64-cpython-38/Release/GitHub/deepsnake/lib/csrc/extreme_utils/src/nms.obj	8e7e775e12cec7b7
+18	15050	7342740991430609	D:/GitHub/deepsnake/lib/csrc/extreme_utils/build/temp.win-amd64-cpython-38/Release/GitHub/deepsnake/lib/csrc/extreme_utils/src/utils.obj	1186a68f6c7cc910

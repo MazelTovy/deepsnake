@@ -1,0 +1,7 @@
+# ninja log v5
+0	10848	7342732985530217	D:/GitHub/deepsnake/lib/csrc/roi_align_layer/build/temp.win-amd64-cpython-38/Release/GitHub/deepsnake/lib/csrc/roi_align_layer/cpu/ROIAlign_cpu.obj	3a871db9c0efc9b8
+4	11140	7342732987626046	D:/GitHub/deepsnake/lib/csrc/roi_align_layer/build/temp.win-amd64-cpython-38/Release/GitHub/deepsnake/lib/csrc/roi_align_layer/vision.obj	5a87c700d3eaa745
+1	13483	7342739297913645	D:/GitHub/deepsnake/lib/csrc/roi_align_layer/build/temp.win-amd64-cpython-38/Release/GitHub/deepsnake/lib/csrc/roi_align_layer/cuda/ROIAlign_cuda.obj	fa4af152a74bdf7a
+25	11348	7342741298515466	D:/GitHub/deepsnake/lib/csrc/roi_align_layer/build/temp.win-amd64-cpython-38/Release/GitHub/deepsnake/lib/csrc/roi_align_layer/vision.obj	c66595e04da108f6
+21	11606	7342741299773577	D:/GitHub/deepsnake/lib/csrc/roi_align_layer/build/temp.win-amd64-cpython-38/Release/GitHub/deepsnake/lib/csrc/roi_align_layer/cpu/ROIAlign_cpu.obj	59ea34ba544e1576
+23	14628	7342741331213437	D:/GitHub/deepsnake/lib/csrc/roi_align_layer/build/temp.win-amd64-cpython-38/Release/GitHub/deepsnake/lib/csrc/roi_align_layer/cuda/ROIAlign_cuda.obj	10f93f4a21bd213f

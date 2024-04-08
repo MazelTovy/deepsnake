@@ -1,12 +1,15 @@
 #include <ATen/ATen.h>
 #include <ATen/cuda/CUDAContext.h>
-#include <THC/THC.h>
-#include <THC/THCAtomics.cuh>
-#include <THC/THCDeviceUtils.cuh>
+#include <ATen/ceil_div.h>
+#include <ATen/cuda/ThrustAllocator.h>
+#include <cstdint>
+// #include <THC/THC.h>
+// #include <THC/THCAtomics.cuh>
+// #include <THC/THCDeviceUtils.cuh>
 #include "cuda_common.h"
 
 
-__device__ float angle_distance(float cx, float cy, long x, long y, float u, float v) {
+__device__ float angle_distance(float cx, float cy, int64_t x, int64_t y, float u, float v) {
     float dx = cx - float(x);
     float dy = cy - float(y);
     float n1 = sqrt(u * u + v * v);
@@ -17,7 +20,7 @@ __device__ float angle_distance(float cx, float cy, long x, long y, float u, flo
 }
 
 
-__device__ float l2_distance(float cx, float cy, long x, long y, float u, float v) {
+__device__ float l2_distance(float cx, float cy, int64_t x, int64_t y, float u, float v) {
     float dx = float(x) + u;
     float dy = float(y) + v;
     dx = cx - dx;
@@ -29,24 +32,24 @@ __device__ void collect_tt(
     const float* ext_hm,
     const float* vote,
     const float* ct,
-    long* extreme_point,
-    long x_min,
-    long x_max,
-    long y_min,
-    long radius,
+    int64_t* extreme_point,
+    int64_t x_min,
+    int64_t x_max,
+    int64_t y_min,
+    int64_t radius,
     int h,
     int w
 ) {
-    long ext_x = (x_min + x_max) / 2;
-    long ext_y = y_min;
+    int64_t ext_x = (x_min + x_max) / 2;
+    int64_t ext_y = y_min;
     float max_score = ext_hm[ext_y * w + ext_x];
 
-    for (long i = -radius; i <= radius; i++) {
+    for (int64_t i = -radius; i <= radius; i++) {
         if (y_min + i < 0 || y_min + i > h - 1)
             continue;
         const float* line = &ext_hm[(y_min + i) * w];
         const float* vote_line = &vote[(y_min + i) * w * 2];
-        for (long j = x_min; j <= x_max; j++) {
+        for (int64_t j = x_min; j <= x_max; j++) {
             float score = line[j];
             float vote_x = vote_line[j * 2];
             float vote_y = vote_line[j * 2 + 1];
@@ -73,22 +76,22 @@ __device__ void collect_ll(
     const float* ext_hm,
     const float* vote,
     const float* ct,
-    long* extreme_point,
-    long x_min,
-    long y_min,
-    long y_max,
-    long radius,
+    int64_t* extreme_point,
+    int64_t x_min,
+    int64_t y_min,
+    int64_t y_max,
+    int64_t radius,
     int h,
     int w
 ) {
-    long ext_x = x_min;
-    long ext_y = (y_min + y_max) / 2;
+    int64_t ext_x = x_min;
+    int64_t ext_y = (y_min + y_max) / 2;
     float max_score = ext_hm[ext_y * w + ext_x];
 
-    for (long i = -radius; i <= radius; i++) {
+    for (int64_t i = -radius; i <= radius; i++) {
         if (x_min + i < 0 || x_min + i > w - 1)
             continue;
-        for (long j = y_min; j <= y_max; j++) {
+        for (int64_t j = y_min; j <= y_max; j++) {
             float score = ext_hm[j * w + x_min + i];
             float vote_x = vote[j * w * 2 + (x_min + i) * 2];
             float vote_y = vote[j * w * 2 + (x_min + i) * 2 + 1];
@@ -113,11 +116,11 @@ __device__ void collect_ll(
 
 __global__ void collect_extreme_point_kernel(
     const float* ext_hm,
-    const long* bbox,
-    const long* radius,
+    const int64_t* bbox,
+    const int64_t* radius,
     const float* vote,
     const float* ct,
-    long* extreme_point,
+    int64_t* extreme_point,
     int b,
     int n,
     int h,
@@ -132,15 +135,15 @@ __global__ void collect_extreme_point_kernel(
     int direction = index % 4;
 
     const float* c_ext_hm = &ext_hm[current_b * 4 * h * w + direction * h * w];
-    const long* c_bbox = &bbox[current_b * n * 4 + current_n * 4];
+    const int64_t* c_bbox = &bbox[current_b * n * 4 + current_n * 4];
     int x_min = c_bbox[0];
     int y_min = c_bbox[1];
     int x_max = c_bbox[2];
     int y_max = c_bbox[3];
-    const long c_radius = radius[current_b * n + current_n];
+    const int64_t c_radius = radius[current_b * n + current_n];
     const float* c_vote = &vote[current_b * h * w * 2];
     const float* c_ct = &ct[current_b * n * 2 + current_n * 2];
-    long* c_ext_point = &extreme_point[current_b * n * 4 * 2 + current_n * 4 * 2 + direction * 2];
+    int64_t* c_ext_point = &extreme_point[current_b * n * 4 * 2 + current_n * 4 * 2 + direction * 2];
 
     if (direction == 0)
         collect_tt(c_ext_hm, c_vote, c_ct, c_ext_point, x_min, x_max, y_min, c_radius, h, w);
@@ -196,30 +199,30 @@ at::Tensor collect_extreme_point(
 
     collect_extreme_point_kernel<<<bdim, tdim, 0, stream>>>(
         ext_hm.contiguous().data<float>(),
-        bbox.contiguous().data<long>(),
-        radius.contiguous().data<long>(),
+        bbox.contiguous().data<int64_t>(),
+        radius.contiguous().data<int64_t>(),
         vote.contiguous().data<float>(),
         ct.contiguous().data<float>(),
-        extreme_point.data<long>(),
+        extreme_point.data<int64_t>(),
         b,
         n,
         h,
         w
     );
-    THCudaCheck(cudaGetLastError());
+    AT_CUDA_CHECK(cudaGetLastError());
 
     return extreme_point;
 }
 
 
 __global__ void _calculate_edge_num(
-    long* edge_num,
-    const long* edge_num_sum,
-    const long* edge_idx_sort,
+    int64_t* edge_num,
+    const int64_t* edge_num_sum,
+    const int64_t* edge_idx_sort,
     const int b,
     const int n,
     const int orig_p_num,
-    const long p_num
+    const int64_t p_num
 ) {
     int index = threadIdx.x + blockIdx.x * blockDim.x;
     if (index >= b * n)
@@ -228,9 +231,9 @@ __global__ void _calculate_edge_num(
     const int c_b = index / n;
     const int c_n = index % n;
 
-    long* c_edge_num = &edge_num[c_b * n * orig_p_num + c_n * orig_p_num];
-    const long c_edge_num_sum = edge_num_sum[c_b * n + c_n];
-    const long* c_edge_idx_sort = &edge_idx_sort[c_b * n * orig_p_num + c_n * orig_p_num];
+    int64_t* c_edge_num = &edge_num[c_b * n * orig_p_num + c_n * orig_p_num];
+    const int64_t c_edge_num_sum = edge_num_sum[c_b * n + c_n];
+    const int64_t* c_edge_idx_sort = &edge_idx_sort[c_b * n * orig_p_num + c_n * orig_p_num];
 
     if (c_edge_num_sum == p_num)
         return;
@@ -239,9 +242,9 @@ __global__ void _calculate_edge_num(
         c_edge_num[c_edge_idx_sort[0]] += p_num - c_edge_num_sum;
     else {
         int id = 0;
-        long pass_num = c_edge_num_sum - p_num;
+        int64_t pass_num = c_edge_num_sum - p_num;
         while (pass_num > 0) {
-            long edge_idx = c_edge_idx_sort[id];
+            int64_t edge_idx = c_edge_idx_sort[id];
             if (c_edge_num[edge_idx] > pass_num) {
                 c_edge_num[edge_idx] -= pass_num;
                 pass_num = 0;
@@ -288,23 +291,23 @@ void calculate_edge_num(
     dim3 tdim(tdim0, tdim1, tdim2);
 
     _calculate_edge_num<<<bdim, tdim, 0, stream>>>(
-        edge_num.data<long>(),
-        edge_num_sum.contiguous().data<long>(),
-        edge_idx_sort.contiguous().data<long>(),
+        edge_num.data<int64_t>(),
+        edge_num_sum.contiguous().data<int64_t>(),
+        edge_idx_sort.contiguous().data<int64_t>(),
         b,
         n,
         orig_p_num,
-        long(p_num)
+        int64_t(p_num)
     );
-    THCudaCheck(cudaGetLastError());
+    AT_CUDA_CHECK(cudaGetLastError());
 }
 
 
 __global__ void _calculate_wnp(
-    const long* edge_num,
-    const long* edge_start_idx,
+    const int64_t* edge_num,
+    const int64_t* edge_start_idx,
     float* weight,
-    long* ind,
+    int64_t* ind,
     const int b,
     const int n,
     const int orig_p_num,
@@ -318,15 +321,15 @@ __global__ void _calculate_wnp(
     const int c_n = (index - c_b * n * orig_p_num) / orig_p_num;
     const int c_edge_idx = index % orig_p_num;
 
-    const long c_edge_num = edge_num[index];
+    const int64_t c_edge_num = edge_num[index];
     const int c_start_idx = int(edge_start_idx[index]);
     float* c_weight = &weight[c_b * n * p_num + c_n * p_num + c_start_idx];
-    long* c_ind = &ind[c_b * n * p_num * 2 + c_n * p_num * 2 + c_start_idx * 2];
+    int64_t* c_ind = &ind[c_b * n * p_num * 2 + c_n * p_num * 2 + c_start_idx * 2];
 
-    for (long i = 0; i < c_edge_num; i++) {
+    for (int64_t i = 0; i < c_edge_num; i++) {
         c_weight[i] = float(i) / float(c_edge_num);
-        c_ind[i * 2] = long(c_edge_idx);
-        c_ind[i * 2 + 1] = long((c_edge_idx + 1) % orig_p_num);
+        c_ind[i * 2] = int64_t(c_edge_idx);
+        c_ind[i * 2 + 1] = int64_t((c_edge_idx + 1) % orig_p_num);
     }
 }
 
@@ -359,16 +362,16 @@ std::tuple<at::Tensor, at::Tensor> calculate_wnp(
     dim3 tdim(tdim0, tdim1, tdim2);
 
     _calculate_wnp<<<bdim, tdim, 0, stream>>>(
-        edge_num.contiguous().data<long>(),
-        edge_start_idx.contiguous().data<long>(),
+        edge_num.contiguous().data<int64_t>(),
+        edge_start_idx.contiguous().data<int64_t>(),
         weight.data<float>(),
-        ind.data<long>(),
+        ind.data<int64_t>(),
         b,
         n,
         orig_p_num,
         p_num
     );
-    THCudaCheck(cudaGetLastError());
+    AT_CUDA_CHECK(cudaGetLastError());
 
     return std::make_tuple(weight, ind);
 }
@@ -376,7 +379,7 @@ std::tuple<at::Tensor, at::Tensor> calculate_wnp(
 
 __global__ void _roll_array(
     const float* array,
-    const long* step,
+    const int64_t* step,
     float* new_array,
     const int b,
     const int n,
@@ -428,13 +431,13 @@ at::Tensor roll_array(
 
     _roll_array<<<bdim, tdim, 0, stream>>>(
         array.contiguous().data<float>(),
-        step.contiguous().data<long>(),
+        step.contiguous().data<int64_t>(),
         new_array.data<float>(),
         b,
         n,
         d
     );
-    THCudaCheck(cudaGetLastError());
+    AT_CUDA_CHECK(cudaGetLastError());
 
     return new_array;
 }

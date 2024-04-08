@@ -1,0 +1,8 @@
+setup.py
+D:/GitHub/deepsnake/lib/csrc/extreme_utils/utils.cpp
+D:/GitHub/deepsnake/lib/csrc/extreme_utils/src/nms.cu
+D:/GitHub/deepsnake/lib/csrc/extreme_utils/src/utils.cu
+UNKNOWN.egg-info/PKG-INFO
+UNKNOWN.egg-info/SOURCES.txt
+UNKNOWN.egg-info/dependency_links.txt
+UNKNOWN.egg-info/top_level.txt

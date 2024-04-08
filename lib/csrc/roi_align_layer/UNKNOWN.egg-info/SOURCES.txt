@@ -1,0 +1,8 @@
+setup.py
+D:/GitHub/deepsnake/lib/csrc/roi_align_layer/vision.cpp
+D:/GitHub/deepsnake/lib/csrc/roi_align_layer/cpu/ROIAlign_cpu.cpp
+D:/GitHub/deepsnake/lib/csrc/roi_align_layer/cuda/ROIAlign_cuda.cu
+UNKNOWN.egg-info/PKG-INFO
+UNKNOWN.egg-info/SOURCES.txt
+UNKNOWN.egg-info/dependency_links.txt
+UNKNOWN.egg-info/top_level.txt
